@@ -87,7 +87,7 @@
 }
 
 .user-message {
-  background-color: #e9f5ff;
+  background-color: #218ee8;
   align-self: flex-end;
   border-bottom-right-radius: 5px;
 }
@@ -99,7 +99,7 @@
 }
 
 .code-block {
-  background-color: #000000;
+  background-color: hsla(0, 0%, 94%, 0.965);
   color: #000000;
   padding: 10px;
   border-radius: 5px;
