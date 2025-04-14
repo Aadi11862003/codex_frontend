@@ -19,39 +19,6 @@ const Compiler = () => {
     const [isDarkTheme, setIsDarkTheme] = useState(false); // Theme toggle
     const [executionResult, setExecutionResult] = useState(null); // Store execution result for visualization
     
-    const analyzeComplexityFrontend = (code) => {
-        let timeComplexity = 'O(1)';
-        let spaceComplexity = 'O(1)';
-
-        // Count loops to determine time complexity
-        const loopMatches = code.match(/for\s*\(|while\s*\(/g);
-        if (loopMatches) {
-            const loopCount = loopMatches.length;
-            timeComplexity = loopCount > 1 ? `O(n^${loopCount})` : 'O(n)';
-        }
-
-        // Check for recursion
-        if (code.match(/\breturn\b.*\b\w+\(/)) {
-            timeComplexity = 'O(2^n)';
-        }
-
-        // Check for memory allocation (e.g., arrays, objects)
-        if (code.includes('new') || code.match(/\bint\b.*\[\]/)) {
-            spaceComplexity = 'O(n)';
-        }
-
-        // Adjust space complexity for constant space usage
-        if (!code.includes('new') && !code.match(/\bint\b.*\[\]/)) {
-            spaceComplexity = 'O(1)';
-        }
-
-        setTimeComplexity(timeComplexity);
-        setSpaceComplexity(spaceComplexity);
-    };
-
-    const handleAnalyzeComplexity = () => {
-        analyzeComplexityFrontend(code);
-    };
 
     const handleRunCode = async () => {
         setOutput('');
@@ -114,6 +81,37 @@ const Compiler = () => {
         setIsDarkTheme(!isDarkTheme);
     };
 
+    const handleFindComplexity = async () => {
+        setTimeComplexity('');
+        setSpaceComplexity('');
+        try {
+            const response = await fetch('http://localhost:3000/api/compiler/timeComplexity', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ code }),
+            });
+            const response2 = await fetch('http://localhost:3000/api/compiler/spaceComplexity', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ code }),
+            });
+            const data = await response.json();
+            const data2 = await response2.json();
+            if (data.complexity) {
+                setTimeComplexity(data.complexity);
+                setSpaceComplexity(data2.complexity);
+            } else {
+                alert(data.message || 'Failed to calculate complexity');
+            }
+        } catch (err) {
+            alert('Failed to connect to the server');
+        }
+    };
+
     return (
         <div
             className={`fixed inset-0 z-50 p-8 ${
@@ -171,10 +169,10 @@ const Compiler = () => {
                     Visualize Code
                 </button>
                 <button
-                    onClick={handleAnalyzeComplexity}
+                    onClick={handleFindComplexity}
                     className="py-4 bg-yellow-600 text-white font-semibold rounded-lg shadow hover:bg-yellow-700 transition-all"
                 >
-                    Analyze Complexity
+                    Find Complexity
                 </button>
             </div>
 
