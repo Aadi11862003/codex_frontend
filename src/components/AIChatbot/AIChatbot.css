@@ -58,19 +58,17 @@
 }
 
 .clear-chat-button {
-  background-color: transparent;
-  border: 1px solid white;
-  color: white;
+  background-color: white;
+  border: 1px solid black;
+  color: black;
   padding: 5px 10px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
-  transition: background-color 0.3s;
+  /* transition: background-color 0.3s; */
 }
 
-.clear-chat-button:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-}
+
 
 .chatbot-messages {
   flex: 1;
@@ -95,14 +93,14 @@
 }
 
 .assistant-message {
-  background-color: #f1f1f1;
+  background-color: #007bff; 
   align-self: flex-start;
   border-bottom-left-radius: 5px;
 }
 
 .code-block {
-  background-color: #282c34;
-  color: #abb2bf;
+  background-color: #000000;
+  color: #000000;
   padding: 10px;
   border-radius: 5px;
   font-family: 'Courier New', Courier, monospace;
@@ -116,11 +114,11 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid #000000;
 }
 
 .quick-reply-button {
-  background-color: #e9f5ff;
+  background-color: #e9f5ff;   /*Light blue background */
   border: 1px solid #007bff;
   color: #007bff;
   padding: 8px 12px;
@@ -133,12 +131,13 @@
 
 .quick-reply-button:hover {
   background-color: #007bff;
-  color: white;
+  color: black;
 }
 
 .chatbot-input {
   padding: 15px;
   border-top: 1px solid #e0e0e0;
+  color: #000000;
   display: flex;
   gap: 10px;
 }
@@ -155,7 +154,7 @@
 .chatbot-input button {
   padding: 0 15px;
   background-color: #007bff;
-  color: white;
+  color: black;
   border: none;
   border-radius: 20px;
   cursor: pointer;
@@ -179,7 +178,7 @@
 .typing-indicator span {
   width: 8px;
   height: 8px;
-  background-color: #888;
+  background-color: #090707;
   border-radius: 50%;
   display: inline-block;
   animation: typing 1.4s infinite ease-in-out both;

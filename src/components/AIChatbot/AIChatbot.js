@@ -58,7 +58,7 @@ const AIChatbot = () => {
     
     // Handle responses based on quick reply ID or text content
     if (quickReplyId === 'compiler' || userQuery.includes('compiler') || userQuery.includes('code')) {
-      response = "Our online compiler supports JavaScript currently, with more languages coming soon. You can write your code in the editor, select a language, and click 'Run Code' to execute it. The output will be displayed below the editor.";
+      response = "Our online compiler supports Java currently, with more languages coming soon. You can write your code in the editor, select a language, and click 'Run Code' to execute it. The output will be displayed below the editor.";
       followUpReplies = [
         { id: 'run-code', text: 'How to run my code?' },
         { id: 'errors', text: 'Dealing with errors' },
@@ -216,7 +216,7 @@ const AIChatbot = () => {
           <div className="chatbot-header">
             <h3>CodeX Assistant</h3>
             <button className="clear-chat-button" onClick={clearChat}>
-                
+                clear
             </button>
           </div>
           
