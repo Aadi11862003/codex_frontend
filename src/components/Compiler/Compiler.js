@@ -178,19 +178,27 @@ const Compiler = () => {
 
             {/* Main Content */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1">
-                {/* Code Editor */}
+                {/* Code Editor with Line Numbers */}
                 <div
-                    className={`relative rounded-lg overflow-hidden shadow-lg ${
+                    className={`relative rounded-lg overflow-hidden shadow-lg flex ${
                         isDarkTheme ? 'bg-gray-800' : 'bg-gray-100'
-                    }`}
+                    } h-full`}
                 >
+                    {/* Line Numbers */}
+                    <div className="bg-gray-900 text-gray-400 py-4 pr-6 pl-2 font-mono text-sm select-none text-right" style={{ minWidth: '2.5rem' }}>
+                        {code.split('\n').map((_, idx) => (
+                            <div key={idx} style={{ height: '1.5em' }}>{idx + 1}</div>
+                        ))}
+                    </div>
+                    {/* Textarea */}
                     <textarea
                         value={code}
                         onChange={(e) => setCode(e.target.value)}
                         placeholder="Write your Java code here..."
-                        className={`w-full h-full p-4 ${
+                        className={`w-full h-full pl-4 pr-2 py-4 ${
                             isDarkTheme ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'
                         } border-none font-mono text-sm leading-6 resize-none focus:outline-none`}
+                        style={{ minHeight: '100%', resize: 'none' }}
                     />
                 </div>
 

@@ -44,17 +44,65 @@ const CodeVisualizer = () => {
     }, [isPlaying, currentStep, steps, playbackSpeed]);
 
     const generateVisualizationSteps = (code) => {
+        // Parse code to detect function definitions and calls
         const steps = [];
         const lines = code.split('\n');
+        const functionDefs = {};
+        const callStack = [];
 
-        lines.forEach((line, index) => {
-            steps.push({
-                lineNumber: index + 1,
-                description: `Executing line ${index + 1}: ${line.trim()}`,
-                highlightedCode: highlightCodeLine(code, index + 1),
-            });
+        // First pass: find function definitions
+        lines.forEach((line, idx) => {
+            const funcMatch = line.match(/function\s+(\w+)\s*\(/);
+            if (funcMatch) {
+                functionDefs[funcMatch[1]] = idx;
+            }
         });
 
+        // Second pass: simulate execution
+        let i = 0;
+        while (i < lines.length) {
+            const line = lines[i];
+            const callMatch = line.match(/(\w+)\s*\(/);
+            // If this is a function call and not a definition
+            if (callMatch && functionDefs[callMatch[1]] !== undefined && !line.trim().startsWith('function')) {
+                // Step: calling function
+                steps.push({
+                    lineNumber: i + 1,
+                    description: `Calling function ${callMatch[1]} at line ${i + 1}`,
+                    highlightedCode: highlightCodeLine(code, i + 1),
+                });
+                // Step: jump to function definition
+                const defIdx = functionDefs[callMatch[1]];
+                steps.push({
+                    lineNumber: defIdx + 1,
+                    description: `Jump to function ${callMatch[1]} definition at line ${defIdx + 1}`,
+                    highlightedCode: highlightCodeLine(code, defIdx + 1),
+                });
+                // Simulate executing function body (just next line after definition)
+                let j = defIdx + 1;
+                while (j < lines.length && !lines[j].includes('}')) {
+                    steps.push({
+                        lineNumber: j + 1,
+                        description: `Executing line ${j + 1} in function ${callMatch[1]}: ${lines[j].trim()}`,
+                        highlightedCode: highlightCodeLine(code, j + 1),
+                    });
+                    j++;
+                }
+                // Step: return to call site
+                steps.push({
+                    lineNumber: i + 1,
+                    description: `Return from function ${callMatch[1]} to line ${i + 1}`,
+                    highlightedCode: highlightCodeLine(code, i + 1),
+                });
+            } else {
+                steps.push({
+                    lineNumber: i + 1,
+                    description: `Executing line ${i + 1}: ${line.trim()}`,
+                    highlightedCode: highlightCodeLine(code, i + 1),
+                });
+            }
+            i++;
+        }
         return steps;
     };
 
