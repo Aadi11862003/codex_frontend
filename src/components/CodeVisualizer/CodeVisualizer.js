@@ -2,234 +2,205 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const CodeVisualizer = () => {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const { code } = location.state || {};
-    const [steps, setSteps] = useState([]);
-    const [currentStep, setCurrentStep] = useState(0);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [playbackSpeed, setPlaybackSpeed] = useState(1);
-    const [isLoading, setIsLoading] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { code } = location.state || {};
+  const [steps, setSteps] = useState([]);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [analysis, setAnalysis] = useState(null);
+  const [currentLineNumber, setCurrentLineNumber] = useState(1);
 
-    const highlightColors = ['bg-blue-500/20 text-blue-300', 'bg-green-500/20 text-green-300', 'bg-yellow-500/20 text-yellow-300', 'bg-red-500/20 text-red-300'];
+  const highlightColors = [
+    'bg-blue-500/20 text-blue-300',
+    'bg-green-500/20 text-green-300',
+    'bg-yellow-500/20 text-yellow-300',
+    'bg-red-500/20 text-red-300',
+  ];
 
-    useEffect(() => {
-        if (!code) {
-            alert('No code found. Redirecting to the compiler.');
-            navigate('/compiler');
-            return;
-        }
-
-        setIsLoading(true);
-
-        setTimeout(() => {
-            const generatedSteps = generateVisualizationSteps(code);
-            setSteps(generatedSteps);
-            setCurrentStep(0);
-            setIsLoading(false);
-        }, 1000);
-    }, [code, navigate]);
-
-    useEffect(() => {
-        let timer;
-        if (isPlaying && currentStep < steps.length - 1) {
-            timer = setTimeout(() => {
-                goToNextStep();
-            }, 1000 / playbackSpeed);
-        } else if (currentStep >= steps.length - 1) {
-            setIsPlaying(false);
-        }
-
-        return () => clearTimeout(timer);
-    }, [isPlaying, currentStep, steps, playbackSpeed]);
-
-    const generateVisualizationSteps = (code) => {
-        // Parse code to detect function definitions and calls
-        const steps = [];
-        const lines = code.split('\n');
-        const functionDefs = {};
-        const callStack = [];
-
-        // First pass: find function definitions
-        lines.forEach((line, idx) => {
-            const funcMatch = line.match(/function\s+(\w+)\s*\(/);
-            if (funcMatch) {
-                functionDefs[funcMatch[1]] = idx;
-            }
-        });
-
-        // Second pass: simulate execution
-        let i = 0;
-        while (i < lines.length) {
-            const line = lines[i];
-            const callMatch = line.match(/(\w+)\s*\(/);
-            // If this is a function call and not a definition
-            if (callMatch && functionDefs[callMatch[1]] !== undefined && !line.trim().startsWith('function')) {
-                // Step: calling function
-                steps.push({
-                    lineNumber: i + 1,
-                    description: `Calling function ${callMatch[1]} at line ${i + 1}`,
-                    highlightedCode: highlightCodeLine(code, i + 1),
-                });
-                // Step: jump to function definition
-                const defIdx = functionDefs[callMatch[1]];
-                steps.push({
-                    lineNumber: defIdx + 1,
-                    description: `Jump to function ${callMatch[1]} definition at line ${defIdx + 1}`,
-                    highlightedCode: highlightCodeLine(code, defIdx + 1),
-                });
-                // Simulate executing function body (just next line after definition)
-                let j = defIdx + 1;
-                while (j < lines.length && !lines[j].includes('}')) {
-                    steps.push({
-                        lineNumber: j + 1,
-                        description: `Executing line ${j + 1} in function ${callMatch[1]}: ${lines[j].trim()}`,
-                        highlightedCode: highlightCodeLine(code, j + 1),
-                    });
-                    j++;
-                }
-                // Step: return to call site
-                steps.push({
-                    lineNumber: i + 1,
-                    description: `Return from function ${callMatch[1]} to line ${i + 1}`,
-                    highlightedCode: highlightCodeLine(code, i + 1),
-                });
-            } else {
-                steps.push({
-                    lineNumber: i + 1,
-                    description: `Executing line ${i + 1}: ${line.trim()}`,
-                    highlightedCode: highlightCodeLine(code, i + 1),
-                });
-            }
-            i++;
-        }
-        return steps;
-    };
-
-    const highlightCodeLine = (code, lineNumber) => {
-        const lines = code.split('\n');
-        return lines.map((line, index) => ({
-            code: line,
-            highlighted: index + 1 === lineNumber,
-        }));
-    };
-
-    const goToNextStep = () => {
-        if (currentStep < steps.length - 1) {
-            setCurrentStep((prev) => prev + 1);
-        }
-    };
-
-    const goToPrevStep = () => {
-        if (currentStep > 0) {
-            setCurrentStep((prev) => prev - 1);
-        }
-    };
-
-    const togglePlayback = () => {
-        setIsPlaying(!isPlaying);
-    };
-
-    const handleSpeedChange = (e) => {
-        setPlaybackSpeed(parseFloat(e.target.value));
-    };
-
-    if (isLoading) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white flex items-center justify-center">
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-                    Loading Visualization...
-                </h1>
-            </div>
-        );
+  // Generate steps always when code comes in
+  useEffect(() => {
+    if (!code) {
+      alert('No code found. Redirecting to the compiler.');
+      navigate('/compiler');
+      return;
     }
+    const generatedSteps = generateVisualizationSteps(code);
+    setSteps(generatedSteps);
+    setCurrentStep(0);
+    if (generatedSteps.length > 0) {
+      setCurrentLineNumber(generatedSteps[0].lineNumber);
+    }
+  }, [code, navigate]);
 
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-8">
-            <h1 className="text-4xl font-bold text-center mb-8 bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-                Code Visualization
-            </h1>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Code Section */}
-                <div className="bg-gray-800 p-6 rounded-lg shadow-lg h-[70vh] overflow-y-auto">
-                    <h2 className="text-2xl font-bold mb-4">Code</h2>
-                    <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg">
-                        {steps[currentStep]?.highlightedCode.map((line, index) => (
-                            <div
-                                key={index}
-                                className={`flex items-center ${
-                                    line.highlighted ? highlightColors[currentStep % highlightColors.length] : ''
-                                }`}
-                            >
-                                <span className="text-gray-500 w-8 text-right pr-4 select-none">
-                                    {index + 1}
-                                </span>
-                                <span>{line.code}</span>
-                            </div>
-                        ))}
-                    </pre>
-                </div>
+  // Update current line number when step changes
+  useEffect(() => {
+    if (steps[currentStep]) {
+      setCurrentLineNumber(steps[currentStep].lineNumber);
+    }
+  }, [currentStep, steps]);
 
-                {/* Steps Section */}
-                <div className="bg-gray-800 p-6 rounded-lg shadow-lg h-[70vh] overflow-y-auto">
-                    <h2 className="text-2xl font-bold mb-4">Steps of Code Executing</h2>
-                    <div className="bg-gray-900 text-gray-100 p-4 rounded-lg">
-                        <ul className="space-y-2">
-                            {steps.map((step, index) => (
-                                <li
-                                    key={index}
-                                    className={`p-2 rounded-md ${
-                                        index === currentStep ? highlightColors[currentStep % highlightColors.length] : ''
-                                    }`}
-                                >
-                                    {step.description}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                </div>
-            </div>
+  // Generate step-by-step highlights
+  const generateVisualizationSteps = (code) => {
+    const steps = [];
+    const lines = code.split('\n');
+    lines.forEach((line, idx) => {
+      steps.push({
+        lineNumber: idx + 1,
+        description: `Executing line ${idx + 1}: ${line.trim()}`,
+        highlightedCode: highlightCodeLine(code, idx + 1),
+      });
+    });
+    return steps;
+  };
 
-            {/* Controls */}
-            <div className="flex justify-center items-center gap-4 mt-8">
-                <button
-                    onClick={goToPrevStep}
-                    disabled={currentStep === 0}
-                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    ⏮️ Previous
-                </button>
-                <button
-                    onClick={togglePlayback}
-                    className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-                >
-                    {isPlaying ? '⏸️ Pause' : '▶️ Play'}
-                </button>
-                <button
-                    onClick={goToNextStep}
-                    disabled={currentStep === steps.length - 1}
-                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    Next ⏭️
-                </button>
-                <div className="flex items-center gap-2">
-                    <label htmlFor="speed" className="text-gray-300">
-                        Speed:
-                    </label>
-                    <select
-                        id="speed"
-                        value={playbackSpeed}
-                        onChange={handleSpeedChange}
-                        className="px-2 py-1 bg-gray-700 text-white rounded-md"
-                    >
-                        <option value="0.5">0.5x</option>
-                        <option value="1">1x</option>
-                        <option value="2">2x</option>
-                    </select>
-                </div>
-            </div>
+  const highlightCodeLine = (code, lineNumber) => {
+    const lines = code.split('\n');
+    return lines.map((line, index) => ({
+      code: line,
+      highlighted: index + 1 === lineNumber,
+    }));
+  };
+
+  // ⬇️ New: Fetch explanation only when user clicks
+  const handleStartExplaining = async () => {
+    setIsLoading(true);
+    setAnalysis(null);
+    try {
+      const response = await fetch('http://localhost:3000/api/compiler/analyze-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const data = await response.json();
+      setAnalysis(data.analysis || null);
+    } catch (error) {
+      console.error('Error analyzing code:', error);
+      alert('Failed to explain the code');
+    }
+    setIsLoading(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-8">
+      <h1 className="text-4xl font-bold text-center mb-8 bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+        Code Visualization
+      </h1>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Code Section */}
+        <div className="bg-gray-800 p-6 rounded-lg shadow-lg h-[70vh] overflow-y-auto">
+          <h2 className="text-2xl font-bold mb-4">Code</h2>
+          <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg">
+            {steps[currentStep]?.highlightedCode.map((line, index) => (
+              <div
+                key={index}
+                className={`flex items-center ${
+                  line.highlighted
+                    ? highlightColors[currentStep % highlightColors.length]
+                    : ''
+                }`}
+              >
+                <span className="text-gray-500 w-8 text-right pr-4 select-none">
+                  {index + 1}
+                </span>
+                <span>{line.code}</span>
+              </div>
+            ))}
+          </pre>
         </div>
-    );
+
+        {/* Explanation Section */}
+        <div className="bg-gray-800 p-6 rounded-lg shadow-lg h-[70vh] overflow-y-auto flex flex-col">
+          <h2 className="text-2xl font-bold mb-4">Code Explanation</h2>
+
+          {/* Start Explaining Button */}
+          {!analysis && (
+            <button
+              onClick={handleStartExplaining}
+              className="mb-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Explaining...' : 'Start Explaining'}
+            </button>
+          )}
+
+          <div className="bg-gray-900 text-gray-100 p-4 rounded-lg space-y-4 flex-1">
+            {!analysis && !isLoading && (
+              <p className="text-gray-400">
+                Click <strong>Start Explaining</strong> to analyze the code.
+              </p>
+            )}
+
+            {analysis?.introduction && (
+              <div className="p-4 bg-blue-900/30 rounded-lg">
+                <h3 className="text-xl font-semibold mb-2">👋 Overview</h3>
+                <p>{analysis.introduction}</p>
+              </div>
+            )}
+
+            {analysis?.lineByLine && (
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold">🔍 Line by Line Explanation</h3>
+                {analysis.lineByLine.map((line, index) => (
+                  <div
+                    key={index}
+                    className={`p-4 rounded-lg ${
+                      line.lineNumber === currentLineNumber
+                        ? 'bg-blue-500/20 border border-blue-500/50'
+                        : 'bg-gray-800'
+                    }`}
+                  >
+                    <div className="font-mono text-sm text-gray-400 mb-2">
+                      Line {line.lineNumber}: {line.code}
+                    </div>
+                    <p>{line.explanation}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {analysis?.complexity && (
+              <div className="p-4 bg-purple-900/30 rounded-lg">
+                <h3 className="text-xl font-semibold mb-2">⚡ Complexity Analysis</h3>
+                <p>
+                  <span className="text-purple-300">Time Complexity:</span> {analysis.complexity.time}
+                </p>
+                <p>
+                  <span className="text-purple-300">Space Complexity:</span> {analysis.complexity.space}
+                </p>
+              </div>
+            )}
+
+            {analysis?.summary && (
+              <div className="p-4 bg-green-900/30 rounded-lg">
+                <h3 className="text-xl font-semibold mb-2">🎯 Summary</h3>
+                <p>{analysis.summary}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-center gap-4 mt-6">
+        <button
+          disabled={currentStep === 0}
+          onClick={() => setCurrentStep((s) => Math.max(0, s - 1))}
+          className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 disabled:opacity-40"
+        >
+          Previous
+        </button>
+        <button
+          disabled={currentStep === steps.length - 1}
+          onClick={() => setCurrentStep((s) => Math.min(steps.length - 1, s + 1))}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-40"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
 };
 
 export default CodeVisualizer;
