@@ -11,6 +11,12 @@ const CodeVisualizer = () => {
   const [analysis, setAnalysis] = useState(null);
   const [currentLineNumber, setCurrentLineNumber] = useState(1);
 
+  // 🔹 New states for query
+  const [showQuery, setShowQuery] = useState(false);
+  const [queryInput, setQueryInput] = useState('');
+  const [queryResult, setQueryResult] = useState(null);
+  const [isQuerying, setIsQuerying] = useState(false);
+
   const highlightColors = [
     'bg-blue-500/20 text-blue-300',
     'bg-green-500/20 text-green-300',
@@ -62,7 +68,7 @@ const CodeVisualizer = () => {
     }));
   };
 
-  // ⬇️ New: Fetch explanation only when user clicks
+  // Start Explaining
   const handleStartExplaining = async () => {
     setIsLoading(true);
     setAnalysis(null);
@@ -79,6 +85,26 @@ const CodeVisualizer = () => {
       alert('Failed to explain the code');
     }
     setIsLoading(false);
+  };
+
+  // 🔹 Query handler
+  const handleQuery = async () => {
+    if (!queryInput.trim()) return;
+    setIsQuerying(true);
+    setQueryResult(null);
+    try {
+      const response = await fetch('http://localhost:3000/api/compiler/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, question: queryInput }),
+      });
+      const data = await response.json();
+      setQueryResult(data.answer || 'No response found.');
+    } catch (error) {
+      console.error('Error in query:', error);
+      alert('Failed to fetch query result');
+    }
+    setIsQuerying(false);
   };
 
   return (
@@ -114,21 +140,51 @@ const CodeVisualizer = () => {
         <div className="bg-gray-800 p-6 rounded-lg shadow-lg h-[70vh] overflow-y-auto flex flex-col">
           <h2 className="text-2xl font-bold mb-4">Code Explanation</h2>
 
-          {/* Start Explaining Button */}
-          {!analysis && (
+          {/* Buttons */}
+          <div className="flex gap-4 mb-4">
+            {!analysis && (
+              <button
+                onClick={handleStartExplaining}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Explaining...' : 'Start Explaining'}
+              </button>
+            )}
+
             <button
-              onClick={handleStartExplaining}
-              className="mb-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              disabled={isLoading}
+              onClick={() => setShowQuery(!showQuery)}
+              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
             >
-              {isLoading ? 'Explaining...' : 'Start Explaining'}
+              {showQuery ? 'Close Query' : 'Query'}
             </button>
+          </div>
+
+          {/* Query Input Section */}
+          {showQuery && (
+            <div className="mb-4">
+              <input
+                type="text"
+                value={queryInput}
+                onChange={(e) => setQueryInput(e.target.value)}
+                placeholder="Ask a question about this code..."
+                className="w-full px-4 py-2 text-black rounded mb-2"
+              />
+              <button
+                onClick={handleQuery}
+                className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+                disabled={isQuerying}
+              >
+                {isQuerying ? 'Searching...' : 'Search'}
+              </button>
+            </div>
           )}
 
-          <div className="bg-gray-900 text-gray-100 p-4 rounded-lg space-y-4 flex-1">
-            {!analysis && !isLoading && (
+          {/* Results Area */}
+          <div className="bg-gray-900 text-gray-100 p-4 rounded-lg space-y-4 flex-1 overflow-y-auto">
+            {!analysis && !isLoading && !showQuery && (
               <p className="text-gray-400">
-                Click <strong>Start Explaining</strong> to analyze the code.
+                Click <strong>Start Explaining</strong> to analyze the code, or use <strong>Query</strong> to ask questions.
               </p>
             )}
 
@@ -176,6 +232,14 @@ const CodeVisualizer = () => {
               <div className="p-4 bg-green-900/30 rounded-lg">
                 <h3 className="text-xl font-semibold mb-2">🎯 Summary</h3>
                 <p>{analysis.summary}</p>
+              </div>
+            )}
+
+            {/* Query Result */}
+            {queryResult && (
+              <div className="p-4 bg-green-900/30 rounded-lg">
+                <h3 className="text-xl font-semibold mb-2">💡 Query Answer</h3>
+                <p>{queryResult}</p>
               </div>
             )}
           </div>
