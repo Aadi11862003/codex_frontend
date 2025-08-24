@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const CodeVisualizer = () => {
   const location = useLocation();
@@ -13,22 +13,22 @@ const CodeVisualizer = () => {
 
   // 🔹 New states for query
   const [showQuery, setShowQuery] = useState(false);
-  const [queryInput, setQueryInput] = useState('');
+  const [queryInput, setQueryInput] = useState("");
   const [queryResult, setQueryResult] = useState(null);
   const [isQuerying, setIsQuerying] = useState(false);
 
   const highlightColors = [
-    'bg-blue-500/20 text-blue-300',
-    'bg-green-500/20 text-green-300',
-    'bg-yellow-500/20 text-yellow-300',
-    'bg-red-500/20 text-red-300',
+    "bg-blue-500/20 text-blue-300",
+    "bg-green-500/20 text-green-300",
+    "bg-yellow-500/20 text-yellow-300",
+    "bg-red-500/20 text-red-300",
   ];
 
   // Generate steps always when code comes in
   useEffect(() => {
     if (!code) {
-      alert('No code found. Redirecting to the compiler.');
-      navigate('/compiler');
+      alert("No code found. Redirecting to the compiler.");
+      navigate("/compiler");
       return;
     }
     const generatedSteps = generateVisualizationSteps(code);
@@ -49,7 +49,7 @@ const CodeVisualizer = () => {
   // Generate step-by-step highlights
   const generateVisualizationSteps = (code) => {
     const steps = [];
-    const lines = code.split('\n');
+    const lines = code.split("\n");
     lines.forEach((line, idx) => {
       steps.push({
         lineNumber: idx + 1,
@@ -61,7 +61,7 @@ const CodeVisualizer = () => {
   };
 
   const highlightCodeLine = (code, lineNumber) => {
-    const lines = code.split('\n');
+    const lines = code.split("\n");
     return lines.map((line, index) => ({
       code: line,
       highlighted: index + 1 === lineNumber,
@@ -73,16 +73,19 @@ const CodeVisualizer = () => {
     setIsLoading(true);
     setAnalysis(null);
     try {
-      const response = await fetch('http://localhost:3000/api/compiler/analyze-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
-      });
+      const response = await fetch(
+        "http://localhost:3000/api/compiler/analyze-code",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        }
+      );
       const data = await response.json();
       setAnalysis(data.analysis || null);
     } catch (error) {
-      console.error('Error analyzing code:', error);
-      alert('Failed to explain the code');
+      console.error("Error analyzing code:", error);
+      alert("Failed to explain the code");
     }
     setIsLoading(false);
   };
@@ -93,16 +96,16 @@ const CodeVisualizer = () => {
     setIsQuerying(true);
     setQueryResult(null);
     try {
-      const response = await fetch('http://localhost:3000/api/compiler/query', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("http://localhost:3000/api/compiler/query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, question: queryInput }),
       });
       const data = await response.json();
-      setQueryResult(data.answer || 'No response found.');
+      setQueryResult(data.answer || "No response found.");
     } catch (error) {
-      console.error('Error in query:', error);
-      alert('Failed to fetch query result');
+      console.error("Error in query:", error);
+      alert("Failed to fetch query result");
     }
     setIsQuerying(false);
   };
@@ -124,7 +127,7 @@ const CodeVisualizer = () => {
                 className={`flex items-center ${
                   line.highlighted
                     ? highlightColors[currentStep % highlightColors.length]
-                    : ''
+                    : ""
                 }`}
               >
                 <span className="text-gray-500 w-8 text-right pr-4 select-none">
@@ -148,7 +151,7 @@ const CodeVisualizer = () => {
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 disabled={isLoading}
               >
-                {isLoading ? 'Explaining...' : 'Start Explaining'}
+                {isLoading ? "Explaining..." : "Start Explaining"}
               </button>
             )}
 
@@ -156,7 +159,7 @@ const CodeVisualizer = () => {
               onClick={() => setShowQuery(!showQuery)}
               className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
             >
-              {showQuery ? 'Close Query' : 'Query'}
+              {showQuery ? "Close Query" : "Query"}
             </button>
           </div>
 
@@ -175,7 +178,7 @@ const CodeVisualizer = () => {
                 className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
                 disabled={isQuerying}
               >
-                {isQuerying ? 'Searching...' : 'Search'}
+                {isQuerying ? "Searching..." : "Search"}
               </button>
             </div>
           )}
@@ -184,7 +187,8 @@ const CodeVisualizer = () => {
           <div className="bg-gray-900 text-gray-100 p-4 rounded-lg space-y-4 flex-1 overflow-y-auto">
             {!analysis && !isLoading && !showQuery && (
               <p className="text-gray-400">
-                Click <strong>Start Explaining</strong> to analyze the code, or use <strong>Query</strong> to ask questions.
+                Click <strong>Start Explaining</strong> to analyze the code, or
+                use <strong>Query</strong> to ask questions.
               </p>
             )}
 
@@ -197,14 +201,16 @@ const CodeVisualizer = () => {
 
             {analysis?.lineByLine && (
               <div className="space-y-4">
-                <h3 className="text-xl font-semibold">🔍 Line by Line Explanation</h3>
+                <h3 className="text-xl font-semibold">
+                  🔍 Line by Line Explanation
+                </h3>
                 {analysis.lineByLine.map((line, index) => (
                   <div
                     key={index}
                     className={`p-4 rounded-lg ${
                       line.lineNumber === currentLineNumber
-                        ? 'bg-blue-500/20 border border-blue-500/50'
-                        : 'bg-gray-800'
+                        ? "bg-blue-500/20 border border-blue-500/50"
+                        : "bg-gray-800"
                     }`}
                   >
                     <div className="font-mono text-sm text-gray-400 mb-2">
@@ -218,12 +224,16 @@ const CodeVisualizer = () => {
 
             {analysis?.complexity && (
               <div className="p-4 bg-purple-900/30 rounded-lg">
-                <h3 className="text-xl font-semibold mb-2">⚡ Complexity Analysis</h3>
+                <h3 className="text-xl font-semibold mb-2">
+                  ⚡ Complexity Analysis
+                </h3>
                 <p>
-                  <span className="text-purple-300">Time Complexity:</span> {analysis.complexity.time}
+                  <span className="text-purple-300">Time Complexity:</span>{" "}
+                  {analysis.complexity.time}
                 </p>
                 <p>
-                  <span className="text-purple-300">Space Complexity:</span> {analysis.complexity.space}
+                  <span className="text-purple-300">Space Complexity:</span>{" "}
+                  {analysis.complexity.space}
                 </p>
               </div>
             )}
@@ -257,11 +267,13 @@ const CodeVisualizer = () => {
         </button>
         <button
           disabled={currentStep === steps.length - 1}
-          onClick={() => setCurrentStep((s) => Math.min(steps.length - 1, s + 1))}
+          onClick={() =>
+            setCurrentStep((s) => Math.min(steps.length - 1, s + 1))
+          }
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-40"
         >
           Next
-        </button>
+        </button> 
       </div>
     </div>
   );
